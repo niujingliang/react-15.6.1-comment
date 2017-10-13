@@ -16,9 +16,11 @@ import type {ReactInstance} from 'ReactInstanceType';
 
 /**
  * Keeps track of the current owner.
+ * 追踪当前所有者
  *
  * The current owner is the component who should own any components that are
  * currently being constructed.
+ * 当前所有者是应该拥有任何组件的组件目前正在建造。
  */
 var ReactCurrentOwner = {
   /**

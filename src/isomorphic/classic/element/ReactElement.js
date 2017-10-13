@@ -11,14 +11,15 @@
 
 'use strict';
 
+// 保存容器组件，即用户自定义组件的ReactCompositeComponent实例，添加ref引用的需要
 var ReactCurrentOwner = require('ReactCurrentOwner');
 
-var warning = require('warning');
-var canDefineProperty = require('canDefineProperty');
 var hasOwnProperty = Object.prototype.hasOwnProperty;
 
+// symbal或0xeac7标识ReactElementType 
 var REACT_ELEMENT_TYPE = require('ReactElementSymbol');
 
+// react框架预留属性
 var RESERVED_PROPS = {
   key: true,
   ref: true,
@@ -26,79 +27,23 @@ var RESERVED_PROPS = {
   __source: true,
 };
 
-var specialPropKeyWarningShown, specialPropRefWarningShown;
-
+/* 判断config.ref属性是否有效 */
 function hasValidRef(config) {
-  if (__DEV__) {
-    if (hasOwnProperty.call(config, 'ref')) {
-      var getter = Object.getOwnPropertyDescriptor(config, 'ref').get;
-      if (getter && getter.isReactWarning) {
-        return false;
-      }
-    }
-  }
   return config.ref !== undefined;
 }
 
+/* 判断config.key属性是否有效 */
 function hasValidKey(config) {
-  if (__DEV__) {
-    if (hasOwnProperty.call(config, 'key')) {
-      var getter = Object.getOwnPropertyDescriptor(config, 'key').get;
-      if (getter && getter.isReactWarning) {
-        return false;
-      }
-    }
-  }
   return config.key !== undefined;
 }
 
-function defineKeyPropWarningGetter(props, displayName) {
-  var warnAboutAccessingKey = function() {
-    if (!specialPropKeyWarningShown) {
-      specialPropKeyWarningShown = true;
-      warning(
-        false,
-        '%s: `key` is not a prop. Trying to access it will result ' +
-          'in `undefined` being returned. If you need to access the same ' +
-          'value within the child component, you should pass it as a different ' +
-          'prop. (https://fb.me/react-special-props)',
-        displayName,
-      );
-    }
-  };
-  warnAboutAccessingKey.isReactWarning = true;
-  Object.defineProperty(props, 'key', {
-    get: warnAboutAccessingKey,
-    configurable: true,
-  });
-}
-
-function defineRefPropWarningGetter(props, displayName) {
-  var warnAboutAccessingRef = function() {
-    if (!specialPropRefWarningShown) {
-      specialPropRefWarningShown = true;
-      warning(
-        false,
-        '%s: `ref` is not a prop. Trying to access it will result ' +
-          'in `undefined` being returned. If you need to access the same ' +
-          'value within the child component, you should pass it as a different ' +
-          'prop. (https://fb.me/react-special-props)',
-        displayName,
-      );
-    }
-  };
-  warnAboutAccessingRef.isReactWarning = true;
-  Object.defineProperty(props, 'ref', {
-    get: warnAboutAccessingRef,
-    configurable: true,
-  });
-}
-
 /**
- * Factory method to create a new React element. This no longer adheres to
+ *  * Factory method to create a new React element. This no longer adheres to
  * the class pattern, so do not use new to call it. Also, no instanceof check
  * will work. Instead test $$typeof field against Symbol.for('react.element') to check
  * if something is a React Element.
+ * 使用工厂方法创建一个ReactElement实例。
+ * 使用属性$$typeof和Symbol.for('react.element')比对，来检查是否是ReactElement
  *
  * @param {*} type
  * @param {*} key
@@ -110,16 +55,19 @@ function defineRefPropWarningGetter(props, displayName) {
  * change in behavior.
  * @param {*} source An annotation object (added by a transpiler or otherwise)
  * indicating filename, line number, and/or other information.
- * @param {*} owner
+ * 注释对象包含文件名、行号和/或其他信息。
+ * @param {*} owner 创建该Element的父组件.
  * @param {*} props
  * @internal
  */
 var ReactElement = function(type, key, ref, self, source, owner, props) {
   var element = {
     // This tag allow us to uniquely identify this as a React Element
+    // React Element固定值属性，有该属性来判断是否是ReactElement组件
     $$typeof: REACT_ELEMENT_TYPE,
 
     // Built-in properties that belong on the element
+    // element的内置属性
     type: type,
     key: key,
     ref: ref,
@@ -129,61 +77,20 @@ var ReactElement = function(type, key, ref, self, source, owner, props) {
     _owner: owner,
   };
 
-  if (__DEV__) {
-    // The validation flag is currently mutative. We put it on
-    // an external backing store so that we can freeze the whole object.
-    // This can be replaced with a WeakMap once they are implemented in
-    // commonly used development environments.
-    element._store = {};
-
-    // To make comparing ReactElements easier for testing purposes, we make
-    // the validation flag non-enumerable (where possible, which should
-    // include every environment we run tests in), so the test framework
-    // ignores it.
-    if (canDefineProperty) {
-      Object.defineProperty(element._store, 'validated', {
-        configurable: false,
-        enumerable: false,
-        writable: true,
-        value: false,
-      });
-      // self and source are DEV only properties.
-      Object.defineProperty(element, '_self', {
-        configurable: false,
-        enumerable: false,
-        writable: false,
-        value: self,
-      });
-      // Two elements created in two different places should be considered
-      // equal for testing purposes and therefore we hide it from enumeration.
-      Object.defineProperty(element, '_source', {
-        configurable: false,
-        enumerable: false,
-        writable: false,
-        value: source,
-      });
-    } else {
-      element._store.validated = false;
-      element._self = self;
-      element._source = source;
-    }
-    if (Object.freeze) {
-      Object.freeze(element.props);
-      Object.freeze(element);
-    }
-  }
-
   return element;
 };
+
 
 /**
  * Create and return a new ReactElement of the given type.
  * See https://facebook.github.io/react/docs/top-level-api.html#react.createelement
+ * 通过指定type创建React Element
  */
 ReactElement.createElement = function(type, config, children) {
   var propName;
 
   // Reserved names are extracted
+  // 除保留属性外的剩余属性信息
   var props = {};
 
   var key = null;
@@ -202,6 +109,7 @@ ReactElement.createElement = function(type, config, children) {
     self = config.__self === undefined ? null : config.__self;
     source = config.__source === undefined ? null : config.__source;
     // Remaining properties are added to a new props object
+    // 剩余的属性被添加到新的道具对象中
     for (propName in config) {
       if (
         hasOwnProperty.call(config, propName) &&
@@ -214,6 +122,7 @@ ReactElement.createElement = function(type, config, children) {
 
   // Children can be more than one argument, and those are transferred onto
   // the newly allocated props object.
+  // Children不止一个argument, 分配到props的新对象上
   var childrenLength = arguments.length - 2;
   if (childrenLength === 1) {
     props.children = children;
@@ -222,38 +131,16 @@ ReactElement.createElement = function(type, config, children) {
     for (var i = 0; i < childrenLength; i++) {
       childArray[i] = arguments[i + 2];
     }
-    if (__DEV__) {
-      if (Object.freeze) {
-        Object.freeze(childArray);
-      }
-    }
     props.children = childArray;
   }
 
   // Resolve default props
+  // 未设置的属性进行默认值初始化
   if (type && type.defaultProps) {
     var defaultProps = type.defaultProps;
     for (propName in defaultProps) {
       if (props[propName] === undefined) {
         props[propName] = defaultProps[propName];
-      }
-    }
-  }
-  if (__DEV__) {
-    if (key || ref) {
-      if (
-        typeof props.$$typeof === 'undefined' ||
-        props.$$typeof !== REACT_ELEMENT_TYPE
-      ) {
-        var displayName = typeof type === 'function'
-          ? type.displayName || type.name || 'Unknown'
-          : type;
-        if (key) {
-          defineKeyPropWarningGetter(props, displayName);
-        }
-        if (ref) {
-          defineRefPropWarningGetter(props, displayName);
-        }
       }
     }
   }
@@ -271,6 +158,7 @@ ReactElement.createElement = function(type, config, children) {
 /**
  * Return a function that produces ReactElements of a given type.
  * See https://facebook.github.io/react/docs/top-level-api.html#react.createfactory
+ * 生成指定type的ReactElement的工具方法
  */
 ReactElement.createFactory = function(type) {
   var factory = ReactElement.createElement.bind(null, type);
@@ -366,9 +254,11 @@ ReactElement.cloneElement = function(element, config, children) {
   return ReactElement(element.type, key, ref, self, source, owner, props);
 };
 
+
 /**
  * Verifies the object is a ReactElement.
  * See https://facebook.github.io/react/docs/top-level-api.html#react.isvalidelement
+ * 通过$$typeof属性来判断是否是ReatElement对象
  * @param {?object} object
  * @return {boolean} True if `object` is a valid component.
  * @final

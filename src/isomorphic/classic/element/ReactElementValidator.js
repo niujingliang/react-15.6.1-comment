@@ -18,17 +18,20 @@
 
 'use strict';
 
+// 保存容器组件，即用户自定义组件的ReactCompositeComponent实例，添加ref引用的需要  
+// 同时用于提示用户加载的组件模块书写错
 var ReactCurrentOwner = require('ReactCurrentOwner');
+// ReactComponentTreeHook.getCurrentStackAddendum用于获取容器组件的信息  
 var ReactComponentTreeHook = require('ReactComponentTreeHook');
 var ReactElement = require('ReactElement');
 
+// 根据组件的propTypes静态属性校验props
 var checkReactTypeSpec = require('checkReactTypeSpec');
 
-var canDefineProperty = require('canDefineProperty');
 var getIteratorFn = require('getIteratorFn');
 var warning = require('warning');
-var lowPriorityWarning = require('lowPriorityWarning');
 
+// 提示用户书写有错的组件函数名
 function getDeclarationErrorAddendum() {
   if (ReactCurrentOwner.current) {
     var name = ReactCurrentOwner.current.getName();
@@ -38,7 +41,7 @@ function getDeclarationErrorAddendum() {
   }
   return '';
 }
-
+// 提示source错误的信息
 function getSourceInfoErrorAddendum(elementProps) {
   if (
     elementProps !== null &&
@@ -57,9 +60,11 @@ function getSourceInfoErrorAddendum(elementProps) {
  * Warn if there's no key explicitly set on dynamic arrays of children or
  * object keys are not valid. This allows us to keep track of children between
  * updates.
+ * 初次创建时警告，props.children未改变引起的更新不警告
  */
 var ownerHasKeyUseWarning = {};
 
+// props.children的直系父组件信息
 function getCurrentComponentErrorInfo(parentType) {
   var info = getDeclarationErrorAddendum();
 
@@ -80,6 +85,7 @@ function getCurrentComponentErrorInfo(parentType) {
  * reordered. All children that haven't already been validated are required to
  * have a "key" property assigned to it. Error statuses are cached so a warning
  * will only be shown once.
+ * props.children单个值中含有多个ReactElement时，缺失key值警告直系父组件书写有误 
  *
  * @internal
  * @param {ReactElement} element Element that requires a key.
@@ -94,6 +100,7 @@ function validateExplicitKey(element, parentType) {
   var memoizer =
     ownerHasKeyUseWarning.uniqueKey || (ownerHasKeyUseWarning.uniqueKey = {});
 
+  // 获取props.children的直系父组件信息 
   var currentComponentErrorInfo = getCurrentComponentErrorInfo(parentType);
   if (memoizer[currentComponentErrorInfo]) {
     return;
@@ -127,6 +134,7 @@ function validateExplicitKey(element, parentType) {
  * Ensure that every element either is passed in a static location, in an
  * array with an explicit keys property defined, or in an object literal
  * with valid key property.
+ * 校验props.children的每项，单个值只校验是否是ReactElement，多个值再校验是否存在key属性
  *
  * @internal
  * @param {ReactNode} node Statically passed child of any type.
@@ -136,6 +144,7 @@ function validateChildKeys(node, parentType) {
   if (typeof node !== 'object') {
     return;
   }
+  // 数组形式
   if (Array.isArray(node)) {
     for (var i = 0; i < node.length; i++) {
       var child = node[i];
@@ -143,12 +152,12 @@ function validateChildKeys(node, parentType) {
         validateExplicitKey(child, parentType);
       }
     }
-  } else if (ReactElement.isValidElement(node)) {
+  } else if (ReactElement.isValidElement(node)) { // 数组形式
     // This element was passed in a valid location.
     if (node._store) {
       node._store.validated = true;
     }
-  } else if (node) {
+  } else if (node) { // 迭代器形式
     var iteratorFn = getIteratorFn(node);
     // Entry iterators provide implicit keys.
     if (iteratorFn) {
@@ -168,6 +177,7 @@ function validateChildKeys(node, parentType) {
 /**
  * Given an element, validate that its props follow the propTypes definition,
  * provided by the type.
+ * 根据组件的propTypes静态属性校验props，同时提示getDefaultProps只能用于React.createClass方法创建的组件 
  *
  * @param {ReactElement} element
  */
@@ -201,9 +211,11 @@ var ReactElementValidator = {
     var validType = typeof type === 'string' || typeof type === 'function';
     // We warn in this case but don't throw. We expect the element creation to
     // succeed and there will likely be errors in render.
+    // 传参type用户自定义组件构造函数、或ReactDomComponent的类型字符串有误
     if (!validType) {
       if (typeof type !== 'function' && typeof type !== 'string') {
         var info = '';
+        // 用于提示用户加载的组件模块可能尚未导出组件的构造函数  
         if (
           type === undefined ||
           (typeof type === 'object' &&
@@ -215,6 +227,7 @@ var ReactElementValidator = {
             "it's defined in.";
         }
 
+        // 提示用户书写有错的组件构造函数名
         var sourceInfo = getSourceInfoErrorAddendum(props);
         if (sourceInfo) {
           info += sourceInfo;
@@ -255,12 +268,14 @@ var ReactElementValidator = {
     // We don't want exception behavior to differ between dev and prod.
     // (Rendering will throw with a helpful message and as soon as the type is
     // fixed, the key warnings will appear.)
+    // 校验props.children的每项，单个值只校验是否ReactElement，多个值再校验是否存在key属性
     if (validType) {
       for (var i = 2; i < arguments.length; i++) {
         validateChildKeys(arguments[i], type);
       }
     }
 
+    // 根据组件的propTypes静态属性校验props，同时提示getDefaultProps只能用于React.createClass方法创建的组件
     validatePropTypes(element);
 
     return element;
@@ -270,25 +285,6 @@ var ReactElementValidator = {
     var validatedFactory = ReactElementValidator.createElement.bind(null, type);
     // Legacy hook TODO: Warn if this is accessed
     validatedFactory.type = type;
-
-    if (__DEV__) {
-      if (canDefineProperty) {
-        Object.defineProperty(validatedFactory, 'type', {
-          enumerable: false,
-          get: function() {
-            lowPriorityWarning(
-              false,
-              'Factory.type is deprecated. Access the class directly ' +
-                'before passing it to createFactory.',
-            );
-            Object.defineProperty(this, 'type', {
-              value: type,
-            });
-            return type;
-          },
-        });
-      }
-    }
 
     return validatedFactory;
   },

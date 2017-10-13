@@ -14,11 +14,13 @@
 
 import type {ReactInstance} from 'ReactInstanceType';
 
+// 定义ReactElement source参数的对象结构
 export type Source = {
   fileName: string,
   lineNumber: number,
 };
 
+//定义ReactElement的结构
 export type ReactElement = {
   $$typeof: any,
   type: any,
@@ -27,10 +29,6 @@ export type ReactElement = {
   props: any,
   _owner: ReactInstance,
 
-  // __DEV__
-  _store: {
-    validated: boolean,
-  },
   _self: ReactElement,
   _shadowChildren: any,
   _source: Source,
