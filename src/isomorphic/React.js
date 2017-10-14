@@ -11,14 +11,18 @@
 
 'use strict';
 
+// React基类，包含ReactComponent，ReactPureComponent
+// 基类包含setState，forceUpdate和state的updater
 var ReactBaseClasses = require('ReactBaseClasses');
 var ReactChildren = require('ReactChildren');
 var ReactDOMFactories = require('ReactDOMFactories');
+// 组件的实例，组件$$typeof,type,key,ref,props等
 var ReactElement = require('ReactElement');
 var ReactPropTypes = require('ReactPropTypes');
 var ReactVersion = require('ReactVersion');
 
 var createReactClass = require('createClass');
+// 校验children是否单个reactElement  
 var onlyChild = require('onlyChild');
 
 var createElement = ReactElement.createElement;
