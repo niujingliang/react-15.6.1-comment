@@ -13,20 +13,19 @@
 
 var ReactNoopUpdateQueue = require('ReactNoopUpdateQueue');
 
-var canDefineProperty = require('canDefineProperty');
 var emptyObject = require('emptyObject');
 var invariant = require('invariant');
-var lowPriorityWarning = require('lowPriorityWarning');
 
 /**
  * Base class helpers for the updating state of a component.
+ * 用于更新组件状态的基类
  */
 function ReactComponent(props, context, updater) {
   this.props = props;
   this.context = context;
   this.refs = emptyObject;
-  // We initialize the default updater but the real one gets injected by the
-  // renderer.
+  // We initialize the default updater but the real one gets injected by the renderer.
+  // 初始化upadter
   this.updater = updater || ReactNoopUpdateQueue;
 }
 
@@ -50,6 +49,13 @@ ReactComponent.prototype.isReactComponent = {};
  * from this.* because your function may be called after receiveProps but before
  * shouldComponentUpdate, and this new state, props, and context will not yet be
  * assigned to this.
+ * 
+ * 调用setState修改state的值
+ * 不能保证this.state立即被修改，所以当你调用setState后访问this.state时也许会返回旧值
+ * 不能保证调用setState时同步进行。可能会最终批量执行。可以使用callback参数来确保setState的执行
+ * 当partialState参数为function时，函数会在适当的时候执行（非同步）。它将会在最新的组
+ * 件参数(状态、道具、上下文)时调用。这些值可以不同于this.*，因为你的函数可能在
+ * receiveProps之后shouldComponentUpdate之前调用，这时新的state、props和context还未被分配给this。
  *
  * @param {object|function} partialState Next partial state or function to
  *        produce next partial state to be merged with current state.
@@ -65,8 +71,10 @@ ReactComponent.prototype.setState = function(partialState, callback) {
     'setState(...): takes an object of state variables to update or a ' +
       'function which returns an object of state variables.',
   );
+  // 将state放入队里中等待赋值
   this.updater.enqueueSetState(this, partialState);
   if (callback) {
+    // 将callback放入队里中,等待值跟新后调用
     this.updater.enqueueCallback(this, callback, 'setState');
   }
 };
@@ -80,6 +88,9 @@ ReactComponent.prototype.setState = function(partialState, callback) {
  *
  * This will not invoke `shouldComponentUpdate`, but it will invoke
  * `componentWillUpdate` and `componentDidUpdate`.
+ * 
+ * 强制更新。
+ * 此方法将不执行shouldComponentUpdate，但是会执行componentWillUpdate和componentDidUpdate
  *
  * @param {?function} callback Called after update is complete.
  * @final
@@ -93,47 +104,10 @@ ReactComponent.prototype.forceUpdate = function(callback) {
 };
 
 /**
- * Deprecated APIs. These APIs used to exist on classic React classes but since
- * we would like to deprecate them, we're not going to move them over to this
- * modern base class. Instead, we define a getter that warns if it's accessed.
- */
-if (__DEV__) {
-  var deprecatedAPIs = {
-    isMounted: [
-      'isMounted',
-      'Instead, make sure to clean up subscriptions and pending requests in ' +
-        'componentWillUnmount to prevent memory leaks.',
-    ],
-    replaceState: [
-      'replaceState',
-      'Refactor your code to use setState instead (see ' +
-        'https://github.com/facebook/react/issues/3236).',
-    ],
-  };
-  var defineDeprecationWarning = function(methodName, info) {
-    if (canDefineProperty) {
-      Object.defineProperty(ReactComponent.prototype, methodName, {
-        get: function() {
-          lowPriorityWarning(
-            false,
-            '%s(...) is deprecated in plain JavaScript React classes. %s',
-            info[0],
-            info[1],
-          );
-          return undefined;
-        },
-      });
-    }
-  };
-  for (var fnName in deprecatedAPIs) {
-    if (deprecatedAPIs.hasOwnProperty(fnName)) {
-      defineDeprecationWarning(fnName, deprecatedAPIs[fnName]);
-    }
-  }
-}
-
-/**
  * Base class helpers for the updating state of a component.
+ * 
+ * 于ReactComponent类似，只是ReactPureComponent在属性没有变化不会重新render，
+ * 可以减少shouldComponentUpdate代码
  */
 function ReactPureComponent(props, context, updater) {
   // Duplicated from ReactComponent.
@@ -145,6 +119,7 @@ function ReactPureComponent(props, context, updater) {
   this.updater = updater || ReactNoopUpdateQueue;
 }
 
+// 复制ReactComponent的方法
 function ComponentDummy() {}
 ComponentDummy.prototype = ReactComponent.prototype;
 ReactPureComponent.prototype = new ComponentDummy();

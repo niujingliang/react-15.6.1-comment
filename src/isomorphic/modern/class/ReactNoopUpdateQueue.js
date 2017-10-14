@@ -11,26 +11,9 @@
 
 'use strict';
 
-var warning = require('warning');
-
-function warnNoop(publicInstance, callerName) {
-  if (__DEV__) {
-    var constructor = publicInstance.constructor;
-    warning(
-      false,
-      '%s(...): Can only update a mounted or mounting component. ' +
-        'This usually means you called %s() on an unmounted component. ' +
-        'This is a no-op. Please check the code for the %s component.',
-      callerName,
-      callerName,
-      (constructor && (constructor.displayName || constructor.name)) ||
-        'ReactClass',
-    );
-  }
-}
-
 /**
  * This is the abstract API for an update queue.
+ * UpdateQueue的抽象接口
  */
 var ReactNoopUpdateQueue = {
   /**
@@ -68,7 +51,7 @@ var ReactNoopUpdateQueue = {
    * @internal
    */
   enqueueForceUpdate: function(publicInstance) {
-    warnNoop(publicInstance, 'forceUpdate');
+    // warnNoop(publicInstance, 'forceUpdate');
   },
 
   /**
@@ -83,7 +66,7 @@ var ReactNoopUpdateQueue = {
    * @internal
    */
   enqueueReplaceState: function(publicInstance, completeState) {
-    warnNoop(publicInstance, 'replaceState');
+    // warnNoop(publicInstance, 'replaceState');
   },
 
   /**
@@ -97,7 +80,7 @@ var ReactNoopUpdateQueue = {
    * @internal
    */
   enqueueSetState: function(publicInstance, partialState) {
-    warnNoop(publicInstance, 'setState');
+    // warnNoop(publicInstance, 'setState');
   },
 };
 
