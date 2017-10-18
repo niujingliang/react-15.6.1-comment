@@ -8,6 +8,9 @@
  *
  * @providesModule PooledClass
  * @flow
+ * 
+ * PooledClass.addPoolingTo(CopyConstructor)用于将构造函数CopyConstructor转化为工厂函数，
+ * 意义是管理实例数据的创建和销毁，并将销毁数据的实例推入到实例池CopyConstructor.instancePool中。
  */
 
 'use strict';
@@ -21,6 +24,7 @@ var invariant = require('invariant');
  * the Class itself, not an instance. If any others are needed, simply add them
  * here, or in their own files.
  */
+// 单参数创建实例，或者为实例提供单参数数据  
 var oneArgumentPooler = function(copyFieldsFrom) {
   var Klass = this;
   if (Klass.instancePool.length) {
@@ -65,6 +69,7 @@ var fourArgumentPooler = function(a1, a2, a3, a4) {
   }
 };
 
+// 销毁实例数据，并将实例推入实例池Klass.instancePool
 var standardReleaser = function(instance) {
   var Klass = this;
   invariant(
@@ -87,6 +92,12 @@ type Pooler = any;
  * itself (statically) not adding any prototypical fields. Any CopyConstructor
  * you give this may have a `poolSize` property, and will look for a
  * prototypical `destructor` on instances.
+ * 
+ * 将构造函数CopyConstructor工厂化，调用getPooled方法生成实例，release方法销毁实例数据
+ * release方法销毁实例数据的同时，将实例推入instancePool实例池中，可通过getPooled方法取出
+ * release方法的执行需要构造函数CopyConstructor内部包含destructor原型方法
+ * poolSize约定实例存储个数，默认为10
+ * 当次参pooler存在时，以pooler替代默认创建实例的方法oneArgumentPooler，将单参数传入构造函数 
  *
  * @param {Function} CopyConstructor Constructor that can be used to reset.
  * @param {Function} pooler Customizable pooler.
@@ -111,9 +122,9 @@ var addPoolingTo = function<T>(
 };
 
 var PooledClass = {
-  addPoolingTo: addPoolingTo,
-  oneArgumentPooler: (oneArgumentPooler: Pooler),
-  twoArgumentPooler: (twoArgumentPooler: Pooler),
+  addPoolingTo: addPoolingTo, // 将构造函数转化为工厂函数，提供实例池，管理实例数据的销毁和生成
+  oneArgumentPooler: (oneArgumentPooler: Pooler), // 单参数创建实例
+  twoArgumentPooler: (twoArgumentPooler: Pooler), // 双参数创建实例
   threeArgumentPooler: (threeArgumentPooler: Pooler),
   fourArgumentPooler: (fourArgumentPooler: Pooler),
 };

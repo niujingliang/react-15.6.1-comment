@@ -23,7 +23,7 @@ var invariant = require('invariant');
  * The current implementation of this function assumes that a single child gets
  * passed without a wrapper, but the purpose of this helper function is to
  * abstract away the particular structure of children.
- * 校验children是否单个reactElement  
+ * 校验children是否单个reactElement
  *
  * @param {?object} children Child collection structure.
  * @return {ReactElement} The first and only `ReactElement` contained in the

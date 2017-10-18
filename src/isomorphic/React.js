@@ -25,6 +25,7 @@ var createReactClass = require('createClass');
 // 校验children是否单个reactElement  
 var onlyChild = require('onlyChild');
 
+// 创建ReactElement
 var createElement = ReactElement.createElement;
 var createFactory = ReactElement.createFactory;
 var cloneElement = ReactElement.cloneElement;

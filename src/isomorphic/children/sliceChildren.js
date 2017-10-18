@@ -16,6 +16,8 @@ var ReactChildren = require('ReactChildren');
 /**
  * Slice children that are typically specified as `props.children`. This version
  * of slice children ignores empty child components.
+ * 
+ * 从children截取指定的子元素
  *
  * @param {*} children The children set to filter.
  * @param {number} start The first zero-based index to include in the subset.
