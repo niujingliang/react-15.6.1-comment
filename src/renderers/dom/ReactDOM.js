@@ -13,7 +13,9 @@
 
 'use strict';
 
+// 组件实例和DomNode的关系维护工具
 var ReactDOMComponentTree = require('ReactDOMComponentTree');
+// React默认注入方法（事件，组件等插件的注入）
 var ReactDefaultInjection = require('ReactDefaultInjection');
 var ReactMount = require('ReactMount');
 var ReactReconciler = require('ReactReconciler');
@@ -25,22 +27,24 @@ var getHostComponentFromComposite = require('getHostComponentFromComposite');
 var renderSubtreeIntoContainer = require('renderSubtreeIntoContainer');
 var warning = require('warning');
 
+// 注入（初始化React事件、组件等使用的插件方法）
 ReactDefaultInjection.inject();
 
 var ReactDOM = {
-  findDOMNode: findDOMNode,
-  render: ReactMount.render,
-  unmountComponentAtNode: ReactMount.unmountComponentAtNode,
-  version: ReactVersion,
+  findDOMNode: findDOMNode, //获取真实的Dom元素
+  render: ReactMount.render, //在指定dom中渲染Raact组件
+  unmountComponentAtNode: ReactMount.unmountComponentAtNode, // 销毁指定节点及其所有React节点。
+  version: ReactVersion, // React版本信息
 
   /* eslint-disable camelcase */
-  unstable_batchedUpdates: ReactUpdates.batchedUpdates,
-  unstable_renderSubtreeIntoContainer: renderSubtreeIntoContainer,
+  unstable_batchedUpdates: ReactUpdates.batchedUpdates, // 批量更新state（不稳定方法）
+  unstable_renderSubtreeIntoContainer: renderSubtreeIntoContainer, // 更新组件到传入的 DOM 节点上（不稳定方法）
   /* eslint-enable camelcase */
 };
 
 // Inject the runtime into a devtools global hook regardless of browser.
 // Allows for debugging when the hook is injected on the page.
+// 将运行时注入到开发工具中。来允许在页面中通过钩子调试
 if (
   typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ !== 'undefined' &&
   typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.inject === 'function'
