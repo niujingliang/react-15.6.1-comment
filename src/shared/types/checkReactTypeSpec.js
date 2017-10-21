@@ -11,7 +11,16 @@
 
 'use strict';
 
+/**
+ * checkReactTypeSpec 触发props、context、childContext的校验函数
+ * 由“react-dom"包下的ReactCompositeComponent模块创建组件实例时调用，校验context、childContext；
+ * 或者由"react"包下的ReactElementValidator模块调用创建ReactElement时调用，校验props。
+ */
+
+
+// 用于区分校验数据类型prop、context、childContext 
 var ReactPropTypeLocationNames = require('ReactPropTypeLocationNames');
+// 用于判断是否内部调用props校验函数
 var ReactPropTypesSecret = require('ReactPropTypesSecret');
 
 var invariant = require('invariant');
@@ -48,6 +57,13 @@ var loggedTypeFailures = {};
  * @param {?number} debugID The React component instance that is being type-checked
  * @private
  */
+// “react-dom"包下的ReactCompositeComponent、"react"包下的ReactElementValidator模块调用  
+//    用于创建自定义组件实例时校验context、childContext属性，或创建ReactElement时校验props属性  
+// 参数typeSpecs为自定义组件的PropTypes静态属性、或contextTypes实例属性、或childContextTypes实例属性  
+// 参数values为ReactElement的props属性  
+// 参数location为字符串"prop"、"context"、"childContext"，以区分校验数据类型  
+// 参数componentName为自定义组件的displayName  
+// 参数element为ReactElement  
 function checkReactTypeSpec(
   typeSpecs,
   values,

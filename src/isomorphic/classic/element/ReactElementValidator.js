@@ -27,7 +27,7 @@ var ReactElement = require('ReactElement');
 
 // 根据组件的propTypes静态属性校验props
 var checkReactTypeSpec = require('checkReactTypeSpec');
-
+// 获取迭代行数
 var getIteratorFn = require('getIteratorFn');
 var warning = require('warning');
 

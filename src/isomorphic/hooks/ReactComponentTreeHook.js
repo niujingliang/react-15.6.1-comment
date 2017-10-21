@@ -12,6 +12,9 @@
 
 'use strict';
 
+// ReactComponentTreeHook本地开发时，用于获取节点的构建信息；通过ReactDebugTool注入组件实例化、挂载等过程中。
+
+
 var ReactCurrentOwner = require('ReactCurrentOwner');
 
 var invariant = require('invariant');
@@ -20,6 +23,7 @@ var warning = require('warning');
 import type {ReactElement, Source} from 'ReactElementType';
 import type {DebugID} from 'ReactInstanceType';
 
+// 测试函数fn是否浏览器原生函数 
 function isNative(fn) {
   // Based on isNative() from Lodash
   var funcToString = Function.prototype.toString;
