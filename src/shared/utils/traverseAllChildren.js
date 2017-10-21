@@ -11,13 +11,24 @@
 
 'use strict';
 
+/**
+ * traverseAllChildren模块供ReactChildren模块使用，用于遍历ReactNode形式的集合props.children或其他props属性。
+ * traverseAllChildren(children,function(traverseContext,child,name){}, traverseContext){}函数的第三个参数将作为回调函数的首参。
+ * ReactChildren模块调用traverseAllChildren时，traverseContext存储遍历的执行函数，用于执行traverseContext.func方法;
+ * flattenChildren模块调用时，traverseContext作为引用传递输出的最终结果result，用于将子元素扁平化。
+ */
+
+
+// 容器组件，用户自定义组件的ReactCompositeComponent实例化、render过程中，给ReactCurrentOwner.owner赋值  
 var ReactCurrentOwner = require('ReactCurrentOwner');
+// 判断是否ReactElement  
 var REACT_ELEMENT_TYPE = require('ReactElementSymbol');
 
+// 获取迭代的函数
 var getIteratorFn = require('getIteratorFn');
 var invariant = require('invariant');
+// 用于React元素的key属性转化  
 var KeyEscapeUtils = require('KeyEscapeUtils');
-var warning = require('warning');
 
 var SEPARATOR = '.';
 var SUBSEPARATOR = ':';
@@ -37,6 +48,7 @@ var didWarnAboutMaps = false;
 
 /**
  * Generate a key string that identifies a component within a set.
+ * 生成一个字符串key用于标识组件
  *
  * @param {*} component A component that could contain a manual key.
  * @param {number} index Index that is used if a manual key is not provided.
@@ -54,6 +66,9 @@ function getComponentKey(component, index) {
 }
 
 /**
+ * 当props.children为单节点形式时，对该节点执行callback回调，间接执行traverseContext.func函数
+ * 当props.children为嵌套节点形式时，递归调用traverseAllChildrenImpl遍历子孙节点，通过callback回调执行traverseContext.func函数 
+ * 
  * @param {?*} children Children tree container.
  * @param {!string} nameSoFar Name of the key path so far.
  * @param {!function} callback Callback to invoke with each child found.
@@ -74,6 +89,7 @@ function traverseAllChildrenImpl(
     children = null;
   }
 
+  // 作为单一节点ReactNode处理，通过回调callback间接执行traverseContext.func函数或塞入traverseContext中  
   if (
     children === null ||
     type === 'string' ||
@@ -94,9 +110,11 @@ function traverseAllChildrenImpl(
 
   var child;
   var nextName;
-  var subtreeCount = 0; // Count of children found in the current subtree.
+  var subtreeCount = 0; // Count of children found in the current subtree. 统计props.children中含有的节点个数  
   var nextNamePrefix = nameSoFar === '' ? SEPARATOR : nameSoFar + SUBSEPARATOR;
 
+  // props.children成数组形式，遍历子孙节点执行callback回调  
+  // 通过回调callback间接执行traverseContext.func函数或塞入traverseContext中  
   if (Array.isArray(children)) {
     for (var i = 0; i < children.length; i++) {
       child = children[i];
@@ -109,6 +127,8 @@ function traverseAllChildrenImpl(
       );
     }
   } else {
+    // props.children为迭代器，遍历子孙节点执行callback回调  
+    // 通过回调callback间接执行traverseContext.func函数或塞入traverseContext中 
     var iteratorFn = getIteratorFn(children);
     if (iteratorFn) {
       var iterator = iteratorFn.call(children);
@@ -126,26 +146,6 @@ function traverseAllChildrenImpl(
           );
         }
       } else {
-        if (__DEV__) {
-          var mapsAsChildrenAddendum = '';
-          if (ReactCurrentOwner.current) {
-            var mapsAsChildrenOwnerName = ReactCurrentOwner.current.getName();
-            if (mapsAsChildrenOwnerName) {
-              mapsAsChildrenAddendum =
-                ' Check the render method of `' +
-                mapsAsChildrenOwnerName +
-                '`.';
-            }
-          }
-          warning(
-            didWarnAboutMaps,
-            'Using Maps as children is not yet fully supported. It is an ' +
-              'experimental feature that might be removed. Convert it to a ' +
-              'sequence / iterable of keyed ReactElements instead.%s',
-            mapsAsChildrenAddendum,
-          );
-          didWarnAboutMaps = true;
-        }
         // Iterator will provide entry [k,v] tuples rather than values.
         while (!(step = iterator.next()).done) {
           var entry = step.value;
@@ -166,24 +166,8 @@ function traverseAllChildrenImpl(
         }
       }
     } else if (type === 'object') {
+      // 不能接受的对象格式数据，输出相应的错误
       var addendum = '';
-      if (__DEV__) {
-        addendum =
-          ' If you meant to render a collection of children, use an array ' +
-          'instead or wrap the object using createFragment(object) from the ' +
-          'React add-ons.';
-        if (children._isReactElement) {
-          addendum =
-            " It looks like you're using an element created by a different " +
-            'version of React. Make sure to use only one copy of React.';
-        }
-        if (ReactCurrentOwner.current) {
-          var name = ReactCurrentOwner.current.getName();
-          if (name) {
-            addendum += ' Check the render method of `' + name + '`.';
-          }
-        }
-      }
       var childrenString = String(children);
       invariant(
         false,
@@ -210,6 +194,9 @@ function traverseAllChildrenImpl(
  * entire traversal. It can be used to store accumulations or anything else that
  * the callback might find relevant.
  *
+ * 用于遍历props.children或其他props属性(传递ReactNode)，执行callback回调函数
+ * callback执行过程调用traverseContext.func对child进行处理，或者将child塞入traverseContext中
+ * 
  * @param {?*} children Children tree object.
  * @param {!function} callback To invoke upon traversing each child.
  * @param {?*} traverseContext Context for traversal.
@@ -223,4 +210,8 @@ function traverseAllChildren(children, callback, traverseContext) {
   return traverseAllChildrenImpl(children, '', callback, traverseContext);
 }
 
+// traverseAllChildren(children,function(traverseContext,child,name){}, traverseContext){}函数的第三个参数将作为回调函数的首参  
+// react包下ReactChildren模块中，traverseContext存储遍历的执行函数，用于执行traverseContext.func方法  
+// react包下flattenChildren模块中，traverseContext作为引用传递输出的最终结果result，用于将子元素扁平化  
+// react包下ReactChildReconciler模块中，traverseContext获取props.children相关react组件实例的集合 
 module.exports = traverseAllChildren;

@@ -11,6 +11,11 @@
 
 'use strict';
 
+/**
+ * ReactDOMFactories模块为React封装常用的Dom组件。
+ */
+
+
 var ReactElement = require('ReactElement');
 
 /**
@@ -19,10 +24,6 @@ var ReactElement = require('ReactElement');
  * @private
  */
 var createDOMFactory = ReactElement.createFactory;
-if (__DEV__) {
-  var ReactElementValidator = require('ReactElementValidator');
-  createDOMFactory = ReactElementValidator.createFactory;
-}
 
 /**
  * Creates a mapping from supported HTML tags to `ReactDOMComponent` classes.
