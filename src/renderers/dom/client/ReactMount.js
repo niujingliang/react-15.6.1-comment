@@ -19,10 +19,12 @@ var ReactCurrentOwner = require('ReactCurrentOwner');
 var ReactDOMComponentTree = require('ReactDOMComponentTree');
 var ReactDOMContainerInfo = require('ReactDOMContainerInfo');
 var ReactDOMFeatureFlags = require('ReactDOMFeatureFlags');
+// React性能分析标识
 var ReactFeatureFlags = require('ReactFeatureFlags');
 var ReactInstanceMap = require('ReactInstanceMap');
 var ReactInstrumentation = require('ReactInstrumentation');
 var ReactMarkupChecksum = require('ReactMarkupChecksum');
+// 模块用于发起顶层组件或子组件的挂载、卸载、重绘机制。
 var ReactReconciler = require('ReactReconciler');
 var ReactUpdateQueue = require('ReactUpdateQueue');
 var ReactUpdates = require('ReactUpdates');
@@ -34,18 +36,19 @@ var setInnerHTML = require('setInnerHTML');
 var shouldUpdateReactComponent = require('shouldUpdateReactComponent');
 var warning = require('warning');
 
-var ATTR_NAME = DOMProperty.ID_ATTRIBUTE_NAME;
-var ROOT_ATTR_NAME = DOMProperty.ROOT_ATTRIBUTE_NAME;
+var ATTR_NAME = DOMProperty.ID_ATTRIBUTE_NAME; //react使用属性key常量，data-reactid
+var ROOT_ATTR_NAME = DOMProperty.ROOT_ATTRIBUTE_NAME; //react使用属性key常量，data-reactroot
 
-var ELEMENT_NODE_TYPE = 1;
-var DOC_NODE_TYPE = 9;
-var DOCUMENT_FRAGMENT_NODE_TYPE = 11;
+var ELEMENT_NODE_TYPE = 1; //Element元素
+var DOC_NODE_TYPE = 9; //Document节点
+var DOCUMENT_FRAGMENT_NODE_TYPE = 11; //DocumentFragment
 
 var instancesByReactRootID = {};
 
 /**
  * Finds the index of the first character
  * that's not common between the two given strings.
+ * 比对两个字符串，找个第一个不相同char的Index值。如果字符串相等返回-1
  *
  * @return {number} the index of the character where the strings diverge
  */
@@ -60,6 +63,8 @@ function firstDifferenceIndex(string1, string2) {
 }
 
 /**
+ * 获取React根节点的Dom元素
+ * 
  * @param {DOMElement|DOMDocument} container DOM element that may contain
  * a React component
  * @return {?*} DOM element that may have the reactRoot ID, or null.
@@ -69,13 +74,15 @@ function getReactRootElementInContainer(container) {
     return null;
   }
 
+  // Document节点
   if (container.nodeType === DOC_NODE_TYPE) {
-    return container.documentElement;
+    return container.documentElement; // Html节点
   } else {
-    return container.firstChild;
+    return container.firstChild; // 第一个子节点
   }
 }
 
+// 内部使用的获取dom节点reactid的方法
 function internalGetID(node) {
   // If node is something like a window, document, or text node, none of
   // which support attributes or a .getAttribute method, gracefully return
@@ -85,6 +92,7 @@ function internalGetID(node) {
 
 /**
  * Mounts this component and inserts it into the DOM.
+ * 将component挂载插入到container Dom节点中
  *
  * @param {ReactComponent} componentInstance The instance to mount.
  * @param {DOMElement} container DOM element to mount into.
@@ -99,6 +107,7 @@ function mountComponentIntoNode(
   context,
 ) {
   var markerName;
+  // 为True时开启渲染性能计时
   if (ReactFeatureFlags.logTopLevelRenders) {
     var wrappedElement = wrapperInstance._currentElement.props.child;
     var type = wrappedElement.type;
@@ -225,6 +234,7 @@ function nodeIsRenderedByOtherInstance(container) {
 
 /**
  * True if the supplied DOM node is a valid node element.
+ * 是否是一个合法的dom element
  *
  * @param {?DOMElement} node The candidate DOM node.
  * @return {boolean} True if the DOM is a valid DOM node.
@@ -240,6 +250,7 @@ function isValidContainer(node) {
 }
 
 /**
+ * 判断dom节点是否是承载react的节点
  * True if the supplied DOM node is a valid React node element.
  *
  * @param {?DOMElement} node The candidate DOM node.

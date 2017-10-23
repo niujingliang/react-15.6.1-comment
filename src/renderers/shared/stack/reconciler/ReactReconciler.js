@@ -10,7 +10,10 @@
  */
 
 'use strict';
+// 模块用于发起顶层组件或子组件的挂载、卸载、重绘机制。
 
+
+// 创建、销毁、比对reactElement的refs属性相关
 var ReactRef = require('ReactRef');
 var ReactInstrumentation = require('ReactInstrumentation');
 
@@ -19,6 +22,7 @@ var warning = require('warning');
 /**
  * Helper to call ReactRef.attachRefs with this composite component, split out
  * to avoid allocations in the transaction mount-ready queue.
+ * 创建reactElement的refs属性
  */
 function attachRefs() {
   ReactRef.attachRefs(this, this._currentElement);
