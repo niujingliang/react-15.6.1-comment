@@ -117,6 +117,7 @@ function mountComponentIntoNode(
     console.time(markerName);
   }
 
+  // 初始化组件、渲染标记 & 注册事件
   var markup = ReactReconciler.mountComponent(
     wrapperInstance,
     transaction,
@@ -131,6 +132,7 @@ function mountComponentIntoNode(
   }
 
   wrapperInstance._renderedComponent._topLevelWrapper = wrapperInstance;
+  // 将组件镜像挂载到节点上
   ReactMount._mountImageIntoNode(
     markup,
     container,
@@ -142,6 +144,7 @@ function mountComponentIntoNode(
 
 /**
  * Batched mount.
+ * 批量挂载
  *
  * @param {ReactComponent} componentInstance The instance to mount.
  * @param {DOMElement} container DOM element to mount into.
