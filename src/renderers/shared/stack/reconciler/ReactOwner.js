@@ -12,11 +12,17 @@
 
 'use strict';
 
+/**
+ * ReactOwner模块用于调用ReactCompositeComponent实例的attachRef、detachRef方法，向用户自定义组件ReactComponent实例添加或移除refs。被ReactRef调用。
+ */
+
 var invariant = require('invariant');
 
 import type {ReactInstance} from 'ReactInstanceType';
 
 /**
+ * 通过有无attachRef、detachRef方法，判断是否ReactCompositeComponent实例(用户自定义组件由其创建实例、挂载) 
+ * 
  * @param {?object} object
  * @return {boolean} True if `object` is a valid owner.
  * @final
@@ -81,6 +87,7 @@ var ReactOwner = {
         '`render` method, or you have multiple copies of React loaded ' +
         '(details: https://fb.me/react-refs-must-have-owner).',
     );
+    // 向用户自定义组件实例添加refs 
     owner.attachRef(ref, component);
   },
 
@@ -108,6 +115,7 @@ var ReactOwner = {
     var ownerPublicInstance = owner.getPublicInstance();
     // Check that `component`'s owner is still alive and that `component` is still the current ref
     // because we do not want to detach the ref if another component stole it.
+    // 移除用户自定义组件实例的refs 
     if (
       ownerPublicInstance &&
       ownerPublicInstance.refs[ref] === component.getPublicInstance()
