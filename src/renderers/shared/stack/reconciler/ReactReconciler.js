@@ -190,6 +190,10 @@ var ReactReconciler = {
       );
       return;
     }
+    // internalInstance包含_pendingElement、_pendingStateQueue、_pendingForceUpdate用以判断更新方式
+    // _pendingStateQueue为state数据变化引起，由this.setState方法发起
+    // _pendingForceUpdate为调用this.forceUpdate方法发起 
+    // 子组件通过递归调用ReactReconciler.receiveComponent方法
     internalInstance.performUpdateIfNecessary(transaction);
   },
 };
