@@ -174,6 +174,7 @@ function batchedMountComponentIntoNode(
 
 /**
  * Unmounts a component and removes it from the DOM.
+ * 拆卸组件并从移除Dom节点
  *
  * @param {ReactComponent} instance React component instance.
  * @param {DOMElement} container DOM element to unmount from.
@@ -204,6 +205,8 @@ function unmountComponentFromNode(instance, container, safely) {
  * True if the supplied DOM node has a direct React-rendered child that is
  * not a React root element. Useful for warning in `render`,
  * `unmountComponentAtNode`, etc.
+ * 
+ * 如果Dom节点含有一个直接的React渲染节点但是不是React根元素将返回true
  *
  * @param {?DOMElement} node The candidate DOM node.
  * @return {boolean} True if the DOM element contains a direct child that was
