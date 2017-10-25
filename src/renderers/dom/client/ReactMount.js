@@ -224,7 +224,7 @@ function hasNonRootReactChild(container) {
 /**
  * True if the supplied DOM node is a React DOM element and
  * it has been rendered by another copy of React.
- *
+ * 是否是被其他实例渲染的Dom节点
  * @param {?DOMElement} node The candidate DOM node.
  * @return {boolean} True if the DOM has been rendered by another copy of React
  * @internal
@@ -270,7 +270,9 @@ function isReactNode(node) {
   );
 }
 
+// 获取根React实例
 function getHostRootInstanceInContainer(container) {
+  // 获取承载React的根dom节点
   var rootEl = getReactRootElementInContainer(container);
   var prevHostInstance =
     rootEl && ReactDOMComponentTree.getInstanceFromNode(rootEl);
@@ -279,6 +281,7 @@ function getHostRootInstanceInContainer(container) {
     : null;
 }
 
+// 获取dom节点的顶层元素
 function getTopLevelWrapperInContainer(container) {
   var root = getHostRootInstanceInContainer(container);
   return root ? root._hostContainerInfo._topLevelWrapper : null;
@@ -288,6 +291,7 @@ function getTopLevelWrapperInContainer(container) {
  * Temporary (?) hack so that we can store all top-level pending updates on
  * composites instead of having to worry about different types of components
  * here.
+ * 临时hack，以便我们可以存储所有顶级未决更新composite component，而不是担心不同类型的组件在这里.
  */
 var topLevelRootCounter = 1;
 var TopLevelWrapper = function() {
@@ -319,6 +323,10 @@ TopLevelWrapper.isReactTopLevelWrapper = true;
  *   </div>
  *
  * Inside of `container`, the first element rendered is the "reactRoot".
+ * 
+ * 挂载是一个初始React组件并创建代表的Dom元素，将他们插入到container中
+ * 原先container中内容将被清空
+ * 渲染后，container中的第一个子元素将被标记为ReactRoot节点
  */
 var ReactMount = {
   TopLevelWrapper: TopLevelWrapper,
@@ -332,6 +340,7 @@ var ReactMount = {
    * This is a hook provided to support rendering React components while
    * ensuring that the apparent scroll position of its `container` does not
    * change.
+   * 这是一个提供渲染React组件的钩子。确保其“容器”的表观滚动位置不改变
    *
    * @param {DOMElement} container The `container` being rendered into.
    * @param {function} renderCallback This must be called once to do the render.
@@ -342,6 +351,8 @@ var ReactMount = {
 
   /**
    * Take a component that's already mounted into the DOM and replace its props
+   * 更新已经挂载的组件，替换它的属性
+   * 
    * @param {ReactComponent} prevComponent component instance already in the DOM
    * @param {ReactElement} nextElement component instance to render
    * @param {DOMElement} container container to render into
@@ -370,6 +381,7 @@ var ReactMount = {
 
   /**
    * Render a new component into the DOM. Hooked by hooks!
+   * 在Dom节点渲染一个新的组件
    *
    * @param {ReactElement} nextElement element to render
    * @param {DOMElement} container container to render into
