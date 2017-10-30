@@ -11,8 +11,9 @@
 
 'use strict';
 
+// ReactDOMComponent标识
 var ReactDOMComponentFlags = {
-  hasCachedChildNodes: 1 << 0,
+  hasCachedChildNodes: 1 << 0, // 子节点是否已缓存
 };
 
 module.exports = ReactDOMComponentFlags;

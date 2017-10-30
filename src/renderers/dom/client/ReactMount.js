@@ -12,9 +12,11 @@
 'use strict';
 
 var DOMLazyTree = require('DOMLazyTree');
+// 用于加载节点属性插件
 var DOMProperty = require('DOMProperty');
 var React = require('React');
 var ReactBrowserEventEmitter = require('ReactBrowserEventEmitter');
+// 当前所有者是应该拥有任何组件的组件目前正在建造
 var ReactCurrentOwner = require('ReactCurrentOwner');
 var ReactDOMComponentTree = require('ReactDOMComponentTree');
 var ReactDOMContainerInfo = require('ReactDOMContainerInfo');

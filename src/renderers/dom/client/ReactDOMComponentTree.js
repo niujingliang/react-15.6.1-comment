@@ -11,25 +11,31 @@
 
 'use strict';
 
+// 用于加载节点属性插件
 var DOMProperty = require('DOMProperty');
+// ReactDOMComponent标识, 其中hasCachedChildNodes标识子节点是否已缓存
 var ReactDOMComponentFlags = require('ReactDOMComponentFlags');
 
 var invariant = require('invariant');
 
-var ATTR_NAME = DOMProperty.ID_ATTRIBUTE_NAME;
+var ATTR_NAME = DOMProperty.ID_ATTRIBUTE_NAME; // react使用属性key常量，data-reactid
 var Flags = ReactDOMComponentFlags;
 
+// 生成react实例的key值（缓存时使用） 前缀+随机码
 var internalInstanceKey =
   '__reactInternalInstance$' + Math.random().toString(36).slice(2);
 
 /**
  * Check if a given node should be cached.
+ * 判断节点是否需要缓存
  */
 function shouldPrecacheNode(node, nodeID) {
   return (
+    // Dom节点是Element，且reactid === nodeId
     (node.nodeType === 1 && node.getAttribute(ATTR_NAME) === String(nodeID)) ||
-    (node.nodeType === 8 &&
-      node.nodeValue === ' react-text: ' + nodeID + ' ') ||
+    // Dom节点是注释，且内容等于‘ react-text: {nodeId} ’
+    (node.nodeType === 8 && node.nodeValue === ' react-text: ' + nodeID + ' ') ||
+    // Dom节点是注释，且内容等于‘ react-empty: {nodeId} ’
     (node.nodeType === 8 && node.nodeValue === ' react-empty: ' + nodeID + ' ')
   );
 }
@@ -40,6 +46,9 @@ function shouldPrecacheNode(node, nodeID) {
  *
  * This is pretty polymorphic but unavoidable with the current structure we have
  * for `_renderedChildren`.
+ * 
+ * 循环往下找到组件渲染的组件
+ * 这是相当多态性，但不可取消目前的结构中` _renderedchildren `。
  */
 function getRenderedHostOrTextFromComponent(component) {
   var rendered;
