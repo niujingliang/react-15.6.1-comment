@@ -10,7 +10,7 @@
  */
 
 'use strict';
-
+// ReactDom性能分析标识
 var ReactDOMFeatureFlags = {
   useCreateElement: true,
   useFiber: false,

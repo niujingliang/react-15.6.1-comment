@@ -20,11 +20,15 @@ var ReactBrowserEventEmitter = require('ReactBrowserEventEmitter');
 var ReactCurrentOwner = require('ReactCurrentOwner');
 // ReactDOMComponent 树的工具方法，缓存Com <=> Dom 关闭和获取
 var ReactDOMComponentTree = require('ReactDOMComponentTree');
+// 构建外层非react绘制dom节点的信息，为内层ReactDomComponent组件实例提供namespaceURI及_ancestorInfo。
 var ReactDOMContainerInfo = require('ReactDOMContainerInfo');
+// ReactDom性能分析标识
 var ReactDOMFeatureFlags = require('ReactDOMFeatureFlags');
 // React性能分析标识
 var ReactFeatureFlags = require('ReactFeatureFlags');
+// ReactComponent实例的一个维护，key._reactInternalInstance的remove，get，has，set方法
 var ReactInstanceMap = require('ReactInstanceMap');
+// Dev环境下使用，忽略
 var ReactInstrumentation = require('ReactInstrumentation');
 var ReactMarkupChecksum = require('ReactMarkupChecksum');
 // 模块用于发起顶层组件或子组件的挂载、卸载、重绘机制。

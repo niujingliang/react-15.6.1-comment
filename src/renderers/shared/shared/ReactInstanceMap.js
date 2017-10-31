@@ -10,6 +10,7 @@
  */
 
 'use strict';
+// React实例的Map，用于维护组件_reactInternalInstance的值
 
 /**
  * `ReactInstanceMap` maintains a mapping from a public facing stateful
