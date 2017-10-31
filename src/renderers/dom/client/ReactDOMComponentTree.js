@@ -61,13 +61,15 @@ function getRenderedHostOrTextFromComponent(component) {
 /**
  * Populate `_hostNode` on the rendered host/text component with the given
  * DOM node. The passed `inst` can be a composite.
+ * 缓存组件 实例 <=> Dom 关系
  */
 function precacheNode(inst, node) {
   var hostInst = getRenderedHostOrTextFromComponent(inst);
-  hostInst._hostNode = node;
+  hostInst._hostNode = node; // Dom节点
   node[internalInstanceKey] = hostInst;
 }
 
+// 删除指定实例的缓存
 function uncacheNode(inst) {
   var node = inst._hostNode;
   if (node) {
@@ -89,6 +91,8 @@ function uncacheNode(inst) {
  * the DOM nodes we see. To avoid this, ReactMultiChild calls
  * `prepareToManageChildren` before we change `_renderedChildren`, at which
  * time the container's child nodes are always cached (until it unmounts).
+ * 
+ * 缓存所有子节点
  */
 function precacheChildNodes(inst, node) {
   if (inst._flags & Flags.hasCachedChildNodes) {
@@ -122,6 +126,8 @@ function precacheChildNodes(inst, node) {
 /**
  * Given a DOM node, return the closest ReactDOMComponent or
  * ReactDOMTextComponent instance ancestor.
+ * 
+ * 根据Dom节点获取子项最近的组件实例
  */
 function getClosestInstanceFromNode(node) {
   if (node[internalInstanceKey]) {
@@ -156,6 +162,8 @@ function getClosestInstanceFromNode(node) {
 /**
  * Given a DOM node, return the ReactDOMComponent or ReactDOMTextComponent
  * instance, or null if the node was not rendered by this React.
+ * 
+ * 通过Dom节点获取实例
  */
 function getInstanceFromNode(node) {
   var inst = getClosestInstanceFromNode(node);
@@ -169,6 +177,8 @@ function getInstanceFromNode(node) {
 /**
  * Given a ReactDOMComponent or ReactDOMTextComponent, return the corresponding
  * DOM node.
+ * 
+ * 通过实例获取Dom节点
  */
 function getNodeFromInstance(inst) {
   // Without this first invariant, passing a non-DOM-component triggers the next

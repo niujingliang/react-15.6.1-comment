@@ -18,6 +18,7 @@ var React = require('React');
 var ReactBrowserEventEmitter = require('ReactBrowserEventEmitter');
 // 当前所有者是应该拥有任何组件的组件目前正在建造
 var ReactCurrentOwner = require('ReactCurrentOwner');
+// ReactDOMComponent 树的工具方法，缓存Com <=> Dom 关闭和获取
 var ReactDOMComponentTree = require('ReactDOMComponentTree');
 var ReactDOMContainerInfo = require('ReactDOMContainerInfo');
 var ReactDOMFeatureFlags = require('ReactDOMFeatureFlags');
