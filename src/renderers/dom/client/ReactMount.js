@@ -420,12 +420,13 @@ var ReactMount = {
     );
 
     ReactBrowserEventEmitter.ensureScrollValueMonitoring();
+    // 将ReactElement变成DOMComponent
     var componentInstance = instantiateReactComponent(nextElement, false);
 
     // The initial render is synchronous but any updates that happen during
     // rendering, in componentWillMount or componentDidMount, will be batched
     // according to the current batching strategy.
-
+    // 在拿到DOMComponent后，进行批量更新处理，其中参数中的container就是在ReactDOM.render中传入的 容器dom元素
     ReactUpdates.batchedUpdates(
       batchedMountComponentIntoNode,
       componentInstance,
@@ -471,6 +472,7 @@ var ReactMount = {
     );
   },
 
+  // 将子树渲染在容器中
   _renderSubtreeIntoContainer: function(
     parentComponent,
     nextElement,

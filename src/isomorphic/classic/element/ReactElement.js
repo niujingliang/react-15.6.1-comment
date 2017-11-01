@@ -74,6 +74,7 @@ var ReactElement = function(type, key, ref, self, source, owner, props) {
     props: props,
 
     // Record the component responsible for creating this element.
+    // 记录负责创建该元素的组件.
     _owner: owner,
   };
 

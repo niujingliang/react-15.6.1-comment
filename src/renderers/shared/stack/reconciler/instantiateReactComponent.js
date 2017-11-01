@@ -20,6 +20,7 @@ var invariant = require('invariant');
 var warning = require('warning');
 
 // To avoid a cyclic dependency, we create the final class in this module
+// 针对element.type既不是函数也不是字符串，则使用ReactCompositeComponent去生成组件
 var ReactCompositeComponentWrapper = function(element) {
   this.construct(element);
 };
@@ -52,7 +53,8 @@ function isInternalComponentType(type) {
 
 /**
  * Given a ReactNode, create an instance that will actually be mounted.
- *
+ * 将ReactNode（ReactElement）转变为DOMComponent
+ * 
  * @param {ReactNode} node
  * @param {boolean} shouldHaveDebugID
  * @return {object} A new instance of the element's constructor.
@@ -62,6 +64,7 @@ function instantiateReactComponent(node, shouldHaveDebugID) {
   var instance;
 
   if (node === null || node === false) {
+    //如果传入的对象为空，则创建空的节点
     instance = ReactEmptyComponent.create(instantiateReactComponent);
   } else if (typeof node === 'object') {
     var element = node;
@@ -91,12 +94,14 @@ function instantiateReactComponent(node, shouldHaveDebugID) {
     }
 
     // Special case string values
+    // 大多数情况下element.type都会是字符串
     if (typeof element.type === 'string') {
       instance = ReactHostComponent.createInternalComponent(element);
     } else if (isInternalComponentType(element.type)) {
       // This is temporarily available for custom components that are not string
       // representations. I.e. ART. Once those are updated to use the string
       // representation, we can drop this code path.
+      // 如果element.type为函数且prototype不为undefined
       instance = new element.type(element);
 
       // We renamed this. Allow the old name for compat. :(
@@ -104,9 +109,11 @@ function instantiateReactComponent(node, shouldHaveDebugID) {
         instance.getHostNode = instance.getNativeNode;
       }
     } else {
+      // 以上两种情况都不是
       instance = new ReactCompositeComponentWrapper(element);
     }
   } else if (typeof node === 'string' || typeof node === 'number') {
+    // 如果是纯文字则创建文本节点
     instance = ReactHostComponent.createInstanceForText(node);
   } else {
     invariant(false, 'Encountered invalid React node of type %s', typeof node);
@@ -125,6 +132,7 @@ function instantiateReactComponent(node, shouldHaveDebugID) {
   // These two fields are used by the DOM and ART diffing algorithms
   // respectively. Instead of using expandos on components, we should be
   // storing the state needed by the diffing algorithms elsewhere.
+  // 用于diff操作的两个属性
   instance._mountIndex = 0;
   instance._mountImage = null;
 

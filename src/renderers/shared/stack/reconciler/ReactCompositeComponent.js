@@ -128,6 +128,7 @@ var nextMountID = 1;
 var ReactCompositeComponent = {
   /**
    * Base constructor for all composite component.
+   * 提供construct，以element为参数，为生成的对象附加各种属性
    *
    * @param {ReactElement} element
    * @final
