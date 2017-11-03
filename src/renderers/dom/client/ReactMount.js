@@ -598,10 +598,13 @@ var ReactMount = {
    * If the React component was previously rendered into `container`, this will
    * perform an update on it and only mutate the DOM as necessary to reflect the
    * latest React component.
+   * 
+   * 将ReactComponent组件渲染到执行的dom容器中
+   * 如果dom容器中已经有渲染的，就更新表动的Dom
    *
    * @param {ReactElement} nextElement Component element to render.
    * @param {DOMElement} container DOM element to render into.
-   * @param {?function} callback function triggered on completion
+   * @param {?function} callback function triggered on completion 完成后的回调
    * @return {ReactComponent} Component instance rendered in `container`.
    */
   render: function(nextElement, container, callback) {
