@@ -11,6 +11,13 @@
  */
 
 'use strict';
+/**
+ * Transaction模块用于实现，某构造函数的实例调用perform(method,args)方法时，在method函数执行前后调用特定钩子函数的功能。
+ * 成对的前置钩子initialize函数和后置钩子close函数以数组形式添加，且前置钩子initialize函数用于向后置钩子close函数提供参数，在method函数前调用；
+ * 后置钩子close在method函数后调用。
+ * 构造函数需原型继承Transaction，或原型方法逐个赋值。且getTransactionWrappers方法用于添加前置钩子与后置钩子；
+ * reinitializeTransaction方法在初始化时调用，用于清空前、后置钩子；perform方法实际执行method函数、及前后钩子。
+ */
 
 var invariant = require('invariant');
 
@@ -27,6 +34,11 @@ var OBSERVED_ERROR = {};
  * single instance of a `Transaction` for reuse multiple times, that potentially
  * is used to wrap several different methods. Wrappers are extremely simple -
  * they only require implementing two methods.
+ * 翻译：
+ * 事务创建一个黑盒子来包装一个这样的方法，该方法调用之前和之后明确某些不变量的维护（即使在调用包装方法时抛出异常）。
+ * 任何一个在创建是实例化的事务都可以充当不变量的执法者。事务类本身将为你提供一个额外的自动的不变量，然后事务的实例都不会在该不变量执行之后再去执行。
+ * 您通常会创建一个多次重复使用的事务的单个实例，即潜在的用于包装几种不同的方法。
+ * 包装器是极其简单，只需要实现两个方法
  *
  * <pre>
  *                       wrappers (injected at creation time)
@@ -65,11 +77,22 @@ var OBSERVED_ERROR = {};
  * - (Future use case): Wrapping particular flushes of the `ReactWorker` queue
  *   to preserve the `scrollTop` (an automatic scroll aware DOM).
  * - (Future use case): Layout calculations before and after DOM updates.
+ * 使用案例：
+ * - 在和解前后保存输入选择范围。
+ *   即使在意外错误发生时恢复选择
+ * - 停用事件而改变DOM，防止模糊/重点，在保证事后，事件系统被重新激活。
+ * - Flushing一个收集到的DOM突变队列到主UI线程之后和解发生在工作线程中。
+ * - 调用任何收集` componentdidupdate `回调后绘制新的内容。
+ * - （本案例）：包装特别冲的` reactworker `队列保存` scrollTop `（自动滚动到DOM）
+ * - （本案例）：Dom更新前后的布局计算
  *
  * Transactional plugin API:
  * - A module that has an `initialize` method that returns any precomputation.
  * - and a `close` method that accepts the precomputation. `close` is invoked
  *   when the wrapped process is completed, or has failed.
+ * Transaction插件API：
+ * - 一个模块有一个`initialize`方法返回任何预计算
+ * - 和`Close`接受预计算方法。被调用当包装过程完成或失败时
  *
  * @param {Array<TransactionalWrapper>} transactionWrapper Wrapper modules
  * that implement `initialize` and `close`.

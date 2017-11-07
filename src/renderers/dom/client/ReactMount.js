@@ -70,7 +70,7 @@ function firstDifferenceIndex(string1, string2) {
 }
 
 /**
- * 获取React根节点的Dom元素
+ * 获取承载React的根dom节点
  * 
  * @param {DOMElement|DOMDocument} container DOM element that may contain
  * a React component
@@ -281,6 +281,7 @@ function isReactNode(node) {
 function getHostRootInstanceInContainer(container) {
   // 获取承载React的根dom节点
   var rootEl = getReactRootElementInContainer(container);
+  // 获取rootEl对应的React组件实例
   var prevHostInstance =
     rootEl && ReactDOMComponentTree.getInstanceFromNode(rootEl);
   return prevHostInstance && !prevHostInstance._hostParent
@@ -288,8 +289,9 @@ function getHostRootInstanceInContainer(container) {
     : null;
 }
 
-// 获取dom节点的顶层元素
+// 获取container中的顶层包装器
 function getTopLevelWrapperInContainer(container) {
+  // 获取跟节点实例
   var root = getHostRootInstanceInContainer(container);
   return root ? root._hostContainerInfo._topLevelWrapper : null;
 }
@@ -479,7 +481,9 @@ var ReactMount = {
     container,
     callback,
   ) {
+    // 校验注册的回调函数
     ReactUpdateQueue.validateCallback(callback, 'ReactDOM.render');
+    // 校验React节点
     invariant(
       React.isValidElement(nextElement),
       'ReactDOM.render(): Invalid component element.%s',
@@ -496,6 +500,7 @@ var ReactMount = {
             : '',
     );
 
+    // 校验目标容器的合法性
     warning(
       !container ||
         !container.tagName ||
@@ -507,6 +512,10 @@ var ReactMount = {
         'for your app.',
     );
 
+    // 这里为什么要把element再包一层了，
+    // 在ReactCompositeComponentWrapper的performInitialMount方法里，
+    // 我们取得renderedElement是通过组件的render()得来的，
+    // 而最顶层的ReactElement不是通过render()得来的，因此我们只能给他包一层TopLevelWrapper
     var nextWrappedElement = React.createElement(TopLevelWrapper, {
       child: nextElement,
     });
@@ -519,6 +528,7 @@ var ReactMount = {
       nextContext = emptyObject;
     }
 
+    // 获取container中的顶层包装器
     var prevComponent = getTopLevelWrapperInContainer(container);
 
     if (prevComponent) {
@@ -544,9 +554,12 @@ var ReactMount = {
       }
     }
 
+    // React根节点对应的Dom节点（渲染的容器的第一个子节点）
     var reactRootElement = getReactRootElementInContainer(container);
+    // 判断容器中是否有React类型节点（判断Dom节点是否含有react-id属性）
     var containerHasReactMarkup =
       reactRootElement && !!internalGetID(reactRootElement);
+    // 判断容器中是否有根React节点
     var containerHasNonRootReactChild = hasNonRootReactChild(container);
 
     if (__DEV__) {
@@ -575,10 +588,12 @@ var ReactMount = {
       }
     }
 
+    // 标签是否可以重用
     var shouldReuseMarkup =
       containerHasReactMarkup &&
       !prevComponent &&
       !containerHasNonRootReactChild;
+    // 渲染根节点
     var component = ReactMount._renderNewRootComponent(
       nextWrappedElement,
       container,
@@ -602,8 +617,8 @@ var ReactMount = {
    * 将ReactComponent组件渲染到执行的dom容器中
    * 如果dom容器中已经有渲染的，就更新表动的Dom
    *
-   * @param {ReactElement} nextElement Component element to render.
-   * @param {DOMElement} container DOM element to render into.
+   * @param {ReactElement} nextElement Component element to render. 渲染的React节点
+   * @param {DOMElement} container DOM element to render into. 容器（dom节点）
    * @param {?function} callback function triggered on completion 完成后的回调
    * @return {ReactComponent} Component instance rendered in `container`.
    */

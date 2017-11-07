@@ -38,6 +38,7 @@ function getDeclarationErrorAddendum(owner) {
 /**
  * Check if the type reference is a known internal type. I.e. not a user
  * provided composite type.
+ * 是否是内部组件类型
  *
  * @param {function} type
  * @return {boolean} Returns true if this is a valid internal type.
@@ -53,7 +54,7 @@ function isInternalComponentType(type) {
 
 /**
  * Given a ReactNode, create an instance that will actually be mounted.
- * 将ReactNode（ReactElement）转变为DOMComponent
+ * 将ReactNode（ReactElement）转变为DOMComponent实例，然后挂载
  * 
  * @param {ReactNode} node
  * @param {boolean} shouldHaveDebugID
@@ -97,7 +98,7 @@ function instantiateReactComponent(node, shouldHaveDebugID) {
     // 大多数情况下element.type都会是字符串
     if (typeof element.type === 'string') {
       instance = ReactHostComponent.createInternalComponent(element);
-    } else if (isInternalComponentType(element.type)) {
+    } else if (isInternalComponentType(element.type)) { // 是否是内部组件类型
       // This is temporarily available for custom components that are not string
       // representations. I.e. ART. Once those are updated to use the string
       // representation, we can drop this code path.
@@ -143,6 +144,7 @@ function instantiateReactComponent(node, shouldHaveDebugID) {
   // Internal instances should fully constructed at this point, so they should
   // not get any new fields added to them at this point.
   if (__DEV__) {
+    // 阻止向对象添加新属性。将instance变成不可扩展的对象的对象
     if (Object.preventExtensions) {
       Object.preventExtensions(instance);
     }

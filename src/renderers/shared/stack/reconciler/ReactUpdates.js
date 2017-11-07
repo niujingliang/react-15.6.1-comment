@@ -10,10 +10,25 @@
  */
 
 'use strict';
+/**
+ * ReactUpdates模块约定组件重绘过程的前后钩子，包含ReactReconcileTransaction模块的前后钩子(可添加componentDidUpdate回调，及向组件提供updater参数，以使setState等方法可用)，
+ * 以及本模块ReactUpdatesFlushTransaction函数设定的前后钩子(可添加组件重绘完成后的回调callback)；
+ * 通过ReactUpdates.ReactReconcileTransaction提供ReactReconcileTransaction模块的接口；
+ * 通过ReactUpdates.enqueueUpdate调用ReactDefaultBatchingStrategy模块，用于添加脏组件或触发重绘;
+ * 通过ReactUpdates.batchedUpdates(fn)执行fn函数，并触发重绘等。
+ */
 
+
+// 原型继承Transaction的某构造函数的实例将拥有perform(method,args)方法    
+// 实现功能为，method函数执行前后，调用成对的前置钩子initialize、及后置钩子close；initialize为close提供参数  
+// CallbackQueue模块用于添加、执行、重置回调函数队列，机能同jquery中的同名模块。
 var CallbackQueue = require('CallbackQueue');
+// PooledClass.addPoolingTo(CopyConstructor)用于将构造函数CopyConstructor转化为工厂函数，
+// 意义是管理实例数据的创建和销毁，并将销毁数据的实例推入到实例池CopyConstructor.instancePool中。
 var PooledClass = require('PooledClass');
+// React性能分析标识
 var ReactFeatureFlags = require('ReactFeatureFlags');
+// 模块用于发起顶层组件或子组件的挂载、卸载、重绘机制。
 var ReactReconciler = require('ReactReconciler');
 var Transaction = require('Transaction');
 
@@ -26,6 +41,7 @@ var asapEnqueued = false;
 
 var batchingStrategy = null;
 
+// 确认ReactUpdates.ReactReconcileTransaction、batchingStrategy已添加  
 function ensureInjected() {
   invariant(
     ReactUpdates.ReactReconcileTransaction && batchingStrategy,
@@ -102,8 +118,21 @@ Object.assign(ReactUpdatesFlushTransaction.prototype, Transaction, {
 
 PooledClass.addPoolingTo(ReactUpdatesFlushTransaction);
 
+/**
+ * 批量更新
+ * 
+ * @param {*} callback 
+ * @param {DomComponent|CompositeComponent} a componentInstance
+ * @param {DomElement} b container（dom节点）
+ * @param {boolean} c shouldReuseMarkup
+ * @param {Object} d context
+ * @param {*} e 
+ */
 function batchedUpdates(callback, a, b, c, d, e) {
   ensureInjected();
+  // ReactDefaultBatchingStrategy.isBatchingUpdates为否值时
+  // 执行callback回调，并调用flushBatchedUpdates重绘dirtyComponents中脏组件
+  // batchingStrategy.isBatchingUpdates为真值，只执行callback回调  
   return batchingStrategy.batchedUpdates(callback, a, b, c, d, e);
 }
 
