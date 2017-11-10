@@ -109,7 +109,9 @@ var TransactionImpl = {
    * "PooledClass".
    */
   reinitializeTransaction: function(): void {
+    // 将前置钩子和后置钩子transactionWrapper添加到this.transactionWrappers中
     this.transactionWrappers = this.getTransactionWrappers();
+    // 初始化后置钩子close方法的参数，由前置钩子initialize方法返回值构成 
     if (this.wrapperInitData) {
       this.wrapperInitData.length = 0;
     } else {
@@ -121,11 +123,16 @@ var TransactionImpl = {
   _isInTransaction: false,
 
   /**
+   * 用于添加method方法的前置钩子及后置钩子transactionWrapper={initialize:function(){},close:function(){}}
+   * 前置钩子initialize方法为后置钩子close方法提供参数，且存放于this.wrapperInitData中
+   * 返回值形如[{initialize:function(){},close:function(){}}] 
+   * 
    * @abstract
    * @return {Array<TransactionWrapper>} Array of transaction wrappers.
    */
   getTransactionWrappers: null,
 
+  // 判断perform方法执行与否，由此断点closeAll方法是外部调用还是内部调用(不允许外部调用)
   isInTransaction: function(): boolean {
     return !!this._isInTransaction;
   },
@@ -133,6 +140,7 @@ var TransactionImpl = {
   /* eslint-disable space-before-function-paren */
 
   /**
+   * 外部接口，执行各前置钩子initialize方法，随后执行method函数，最后执行后置钩子close方法  
    * Executes the function within a safety window. Use this for the top level
    * methods that result in large amounts of computation/mutations that would
    * need to be safety checked. The optional arguments helps prevent the need
@@ -160,6 +168,7 @@ var TransactionImpl = {
     T: (a: A, b: B, c: C, d: D, e: E, f: F) => G,
   >(method: T, scope: any, a: A, b: B, c: C, d: D, e: E, f: F): G {
     /* eslint-enable space-before-function-paren */
+    // 实例的perform方法单次只能执行一个
     invariant(
       !this.isInTransaction(),
       'Transaction.perform(...): Cannot initialize a transaction when there ' +
@@ -168,7 +177,7 @@ var TransactionImpl = {
     var errorThrown;
     var ret;
     try {
-      this._isInTransaction = true;
+      this._isInTransaction = true; // perform方法执行中标志
       // Catching errors makes debugging more difficult, so we start with
       // errorThrown set to true before setting it to false after calling
       // close -- if it's still set to true in the finally block, it means
@@ -182,12 +191,14 @@ var TransactionImpl = {
         if (errorThrown) {
           // If `method` throws, prefer to show that stack trace over any thrown
           // by invoking `closeAll`.
+          // method函数报错，捕获后置钩子的报错 
           try {
             this.closeAll(0);
           } catch (err) {}
         } else {
           // Since `method` didn't throw, we don't want to silence the exception
           // here.
+          // method函数不报错，后置钩子正常报错 
           this.closeAll(0);
         }
       } finally {
@@ -197,6 +208,7 @@ var TransactionImpl = {
     return ret;
   },
 
+  // 内部调用，在method函数执行前，调用前置钩子transactionWrapper中的initialize方法
   initializeAll: function(startIndex: number): void {
     var transactionWrappers = this.transactionWrappers;
     for (var i = startIndex; i < transactionWrappers.length; i++) {
@@ -211,6 +223,7 @@ var TransactionImpl = {
           ? wrapper.initialize.call(this)
           : null;
       } finally {
+        // 报错即行跳过
         if (this.wrapperInitData[i] === OBSERVED_ERROR) {
           // The initializer for wrapper i threw an error; initialize the
           // remaining wrappers but silence any exceptions from them to ensure
@@ -229,6 +242,7 @@ var TransactionImpl = {
    * (`close`rs that correspond to initializers that failed will not be
    * invoked).
    */
+  // 内部调用，在method函数执行后，调用后置钩子transactionWrapper中的initialize方法
   closeAll: function(startIndex: number): void {
     invariant(
       this.isInTransaction(),
@@ -250,6 +264,7 @@ var TransactionImpl = {
         }
         errorThrown = false;
       } finally {
+        // 报错即行跳过
         if (errorThrown) {
           // The closer for wrapper i threw an error; close the remaining
           // wrappers but silence any exceptions from them to ensure that the
@@ -260,6 +275,7 @@ var TransactionImpl = {
         }
       }
     }
+    // 清空提供给后置钩子close方法的参数
     this.wrapperInitData.length = 0;
   },
 };
