@@ -30,6 +30,8 @@ var PooledClass = require('PooledClass');
 var ReactFeatureFlags = require('ReactFeatureFlags');
 // 模块用于发起顶层组件或子组件的挂载、卸载、重绘机制。
 var ReactReconciler = require('ReactReconciler');
+// 原型继承Transaction的某构造函数的实例将拥有perform(method,args)方法    
+// 实现功能为，method函数执行前后，调用成对的前置钩子initialize、及后置钩子close；initialize为close提供参数 
 var Transaction = require('Transaction');
 
 var invariant = require('invariant');
@@ -50,11 +52,15 @@ function ensureInjected() {
   );
 }
 
+// 组件更新前置钩子，将this.dirtyComponentsLength置为dirtyComponents中脏组件的个数
+// 组件更新后置钩子，重绘过程中添加脏组件，调用flushBatchedUpdates重绘新添加的脏组件
+// 重绘过程中没有添加脏组件，dirtyComponents清空
 var NESTED_UPDATES = {
   initialize: function() {
     this.dirtyComponentsLength = dirtyComponents.length;
   },
   close: function() {
+    // 在组件重绘过程中，再度添加脏组件，剔除dirtyComponents中已重绘的组件，调用flushBatchedUpdates重绘新添加的脏组件
     if (this.dirtyComponentsLength !== dirtyComponents.length) {
       // Additional updates were enqueued by componentDidUpdate handlers or
       // similar; before our own UPDATE_QUEUEING wrapper closes, we want to run
@@ -69,6 +75,10 @@ var NESTED_UPDATES = {
   },
 };
 
+// 通过CallbackQueue回调函数队列机制，即this.callbackQueue
+// 执行this.callbackQueue.enqueue(fn)注入组件更新完成后的回调callback，在runBatchedUpdates函数中实现
+// 通过Transaction添加前、后置钩子机制
+// 前置钩子initialize方法用于清空回调队列；close用于触发组件更新完成后的回调callback
 var UPDATE_QUEUEING = {
   initialize: function() {
     this.callbackQueue.reset();
@@ -80,20 +90,30 @@ var UPDATE_QUEUEING = {
 
 var TRANSACTION_WRAPPERS = [NESTED_UPDATES, UPDATE_QUEUEING];
 
+// 以特定钩子重绘dirtyComponents中的各组件，清空dirtyComponents，或调用flushBatchedUpdates重绘新添加的脏组件
+// 钩子包括ReactUpdatesFlushTransaction前后钩子，可添加组件重绘完成后的回调_pendingCallbacks
+// 包括ReactReconcileTransaction前后钩子，可添加componentDidMount、componentDidUpdate回调
 function ReactUpdatesFlushTransaction() {
+  // 通过Transaction模块清空前后钩子
   this.reinitializeTransaction();
+  // 脏组件个数，用于更新dirtyComponents中待重绘的脏组件 
   this.dirtyComponentsLength = null;
+  // this.callbackQueue用于存储组件更新完成后的回调
   this.callbackQueue = CallbackQueue.getPooled();
+  // ReactReconcileTransaction实例
   this.reconcileTransaction = ReactUpdates.ReactReconcileTransaction.getPooled(
     /* useCreateElement */ true,
   );
 }
 
 Object.assign(ReactUpdatesFlushTransaction.prototype, Transaction, {
+  // 通过Transaction模块设定前置及后置钩子，[{initialize,close}]形式
   getTransactionWrappers: function() {
     return TRANSACTION_WRAPPERS;
   },
 
+  // 清空ReactReconcileTransaction实例中的回调函数componentDidMount、componentDidUpdate
+  // 清空CallbackQueue中的回调函数，再销毁this.reconcileTransaction
   destructor: function() {
     this.dirtyComponentsLength = null;
     CallbackQueue.release(this.callbackQueue);
@@ -102,7 +122,9 @@ Object.assign(ReactUpdatesFlushTransaction.prototype, Transaction, {
     this.reconcileTransaction = null;
   },
 
-  perform: function(method, scope, a) {
+  // 间接调用ReactReconcileTransaction实例的perform方法执行method，method为当前模块的runBatchedUpdates函数 
+  // method执行前后既会调用ReactReconcileTransaction设定的钩子，也会调用ReactUpdatesFlushTransaction设定的钩子
+  perform: function(method, scope, a) { // a为ReactReconcileTransaction实例
     // Essentially calls `this.reconcileTransaction.perform(method, scope, a)`
     // with this transaction's wrappers around it.
     return Transaction.perform.call(
@@ -116,10 +138,14 @@ Object.assign(ReactUpdatesFlushTransaction.prototype, Transaction, {
   },
 });
 
+// 通过PooledClass模块管理实例的创建ReactUpdatesFlushTransaction.getPooled
+// 及实例数据的销毁ReactUpdatesFlushTransaction.release
 PooledClass.addPoolingTo(ReactUpdatesFlushTransaction);
 
 /**
- * 批量更新
+ * ReactDefaultBatchingStrategy.isBatchingUpdates为否值时
+ * 执行callback回调，并调用flushBatchedUpdates重绘dirtyComponents中脏组件
+ * batchingStrategy.isBatchingUpdates为真值，只执行callback回调
  * 
  * @param {*} callback 
  * @param {DomComponent|CompositeComponent} a componentInstance
@@ -138,6 +164,7 @@ function batchedUpdates(callback, a, b, c, d, e) {
 
 /**
  * Array comparator for ReactComponents by mount ordering.
+ * 比较组件的挂载顺序
  *
  * @param {ReactComponent} c1 first component you're comparing
  * @param {ReactComponent} c2 second component you're comparing
